@@ -1,11 +1,21 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
+import type { ClientMessage, ServerMessage } from "@shared/types";
 
-type WSStatus = "connecting" | "open" | "closed";
+export type WSStatus = "connecting" | "open" | "closed";
 
-export function useKuntSocket(roomId: string, seat: number, onMsg: (msg:any)=>void) {
-  const wsRef = useRef<WebSocket|null>(null);
-  const queueRef = useRef<any[]>([]);           // OPEN olmadan gelen mesajları sıraya al
+type UseKuntSocketResult = {
+  send: (data: ClientMessage) => void;
+  status: WSStatus;
+};
+
+export function useKuntSocket(
+  roomId: string,
+  seat: number,
+  onMsg: (msg: ServerMessage) => void,
+): UseKuntSocketResult {
+  const wsRef = useRef<WebSocket | null>(null);
+  const queueRef = useRef<ClientMessage[]>([]); // OPEN olmadan gelen mesajları sıraya al
   const [status, setStatus] = useState<WSStatus>("connecting");
 
   const flushQueue = useCallback(() => {
@@ -13,11 +23,11 @@ export function useKuntSocket(roomId: string, seat: number, onMsg: (msg:any)=>vo
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
     while (queueRef.current.length) {
       const data = queueRef.current.shift();
-      ws.send(JSON.stringify(data));
+      if (data) ws.send(JSON.stringify(data));
     }
   }, []);
 
-  useEffect(()=>{
+  useEffect(() => {
     const url = `ws://localhost:3001/?room=${encodeURIComponent(roomId)}&seat=${seat}`;
     const ws = new WebSocket(url);
     wsRef.current = ws;
@@ -30,7 +40,12 @@ export function useKuntSocket(roomId: string, seat: number, onMsg: (msg:any)=>vo
     };
 
     ws.onmessage = (e) => {
-      try { onMsg(JSON.parse(e.data)); } catch {}
+      try {
+        const parsed = JSON.parse(e.data) as ServerMessage;
+        onMsg(parsed);
+      } catch (error) {
+        console.error("WS mesajı parse edilemedi", error);
+      }
     };
 
     ws.onclose = () => {
@@ -41,13 +56,17 @@ export function useKuntSocket(roomId: string, seat: number, onMsg: (msg:any)=>vo
     ws.onerror = (e) => console.error("WS error", e);
 
     return () => {
-      try { ws.close(); } catch {}
+      try {
+        ws.close();
+      } catch {
+        // ignore
+      }
       wsRef.current = null;
     };
   }, [roomId, seat, onMsg, flushQueue]);
 
   // Güvenli send: OPEN değilse kuyruğa at
-  const send = useCallback((data:any) => {
+  const send = useCallback((data: ClientMessage) => {
     const ws = wsRef.current;
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(data));
