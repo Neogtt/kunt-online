@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useMemo, type ReactNode } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useGame } from "@/lib/store";
-import { useKuntSocket, type WSStatus } from "@/lib/ws-client";
+import type { WSStatus } from "@/lib/ws-client";
+import * as wsClient from "@/lib/ws-client";
 import type { Card, SeatIndex, ServerMessage } from "@shared/types";
 
 const seatFromParam = (seatParam: number): SeatIndex => {
@@ -22,7 +23,7 @@ export default function GamePage() {
   const { id } = useParams<{ id: string }>();
   const sp = useSearchParams();
   const seatParam = Number(sp.get("seat") ?? "0");
-    const safeSeat = seatFromParam(seatParam);
+  const safeSeat = seatFromParam(seatParam);
   const roomId = String(id);
 
   const { state, setState, setSeat } = useGame();
@@ -41,7 +42,7 @@ export default function GamePage() {
     },
     [setState],
   );
-  const { send, status } = useKuntSocket(roomId, safeSeat, handleMessage);  
+  const { send, status } = wsClient.useKuntSocket(roomId, safeSeat, handleMessage);
 
   // sayfa açılınca oyunu başlat (zararsız)
   useEffect(() => {
