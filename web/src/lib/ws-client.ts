@@ -53,7 +53,16 @@ export function useKuntSocket(
       console.log("❌ WS kapandı");
     };
 
-    ws.onerror = (e) => console.error("WS error", e);
+    ws.onerror = (event) => {
+      const errorEvent = event as ErrorEvent;
+      const details =
+        errorEvent?.message ||
+        (errorEvent?.error instanceof Error ? errorEvent.error.message : null) ||
+        `readyState: ${ws.readyState}`;
+
+      console.error("WS error", details);
+      setStatus("closed");
+    };
 
     return () => {
       try {
