@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, type ReactNode } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useGame } from "@/lib/store";
+import { useKuntSocket, type WSStatus } from "@/lib/ws-client";
 import type { Card, SeatIndex, ServerMessage } from "@shared/types";
 
 const seatFromParam = (seatParam: number): SeatIndex => {
