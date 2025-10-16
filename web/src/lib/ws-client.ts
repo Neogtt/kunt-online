@@ -74,7 +74,7 @@ export function useKuntSocket(
           : null) ||
         `readyState: ${readyState}`;
 
-      console.error("WS error", details);
+      console.error(`WS error: ${details}`);
       setStatus("closed");
     };
 
