@@ -54,11 +54,25 @@ export function useKuntSocket(
     };
 
     ws.onerror = (event) => {
+      const target = (event?.target as WebSocket | null) ?? ws;
+      const readyState = target?.readyState ?? ws.readyState;
+
+      if (readyState === WebSocket.CLOSING || readyState === WebSocket.CLOSED) {
+        // The socket was closed (most likely due to unmount/cleanup) before a
+        // connection could be established. This is expected behaviour when the
+        // hook reruns, so we can silently mark the socket as closed without
+        // logging a scary error in the console.
+        setStatus("closed");
+        return;
+      }
+
       const errorEvent = event as ErrorEvent;
       const details =
         errorEvent?.message ||
-        (errorEvent?.error instanceof Error ? errorEvent.error.message : null) ||
-        `readyState: ${ws.readyState}`;
+        (errorEvent?.error instanceof Error
+          ? errorEvent.error.message
+          : null) ||
+        `readyState: ${readyState}`;
 
       console.error("WS error", details);
       setStatus("closed");
