@@ -1,3 +1,5 @@
+# 1) server/package.json (start script düzeltmesi)
+cat > server/package.json <<'JSON'
 {
   "name": "kunt-server",
   "version": "1.0.0",
@@ -5,7 +7,7 @@
   "scripts": {
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
     "build": "tsc",
-    "start": "node dist/server/src/index.js"
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "fastify": "^4.27.2",
@@ -21,3 +23,4 @@
     "nodemon": "^3.1.4"
   }
 }
+JSON
