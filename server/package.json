@@ -1,5 +1,4 @@
-# 1) server/package.json (start script düzeltmesi)
-cat > server/package.json <<'JSON'
+
 {
   "name": "kunt-server",
   "version": "1.0.0",
